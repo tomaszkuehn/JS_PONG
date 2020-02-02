@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:2px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+</style>
+<link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
+</head>
+<body onload="startPong()">
+<script>
+var game_state = 1;
+
+function startPong() {
+    pongBall = new component(10, 10, "black", 30, 30);
+    pongPlayer1 = new component(10, 50, "black", 10, 10);
+    pongPlayer2 = new component(10, 50, "black", 460, 10);
+    myGameArea.start();
+}
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 480;
+        this.canvas.height = 270;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.getElementById("game"));
+        this.interval = setInterval(updateGameArea, 5);
+    },
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+}
+
+function component(width, height, color, x, y) {
+    this.width = width;
+    this.height = height;
+    this.dy = 0;
+    this.dx = 0;
+    this.x = x;
+    this.y = y;    
+    this.score = 0;
+    this.update = function() {
+        ctx = myGameArea.context;
+        ctx.fillStyle = color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+    this.newPos = function() {
+        this.x += this.dx*3;
+        this.y += this.dy*3;      
+        if(this.y > 210) this.y = 210;
+        if(this.y < 10) this.y = 10;
+    }    
+    this.ballPos = function()
+    {
+        this.x += this.dx*2;
+        this.y += this.dy;      
+        if(this.y > 255) this.dy = -this.dy;
+        if(this.y < 5) this.dy = -this.dy;
+    }
+}
+    
+function pongScore()
+    {
+        ctx = myGameArea.context;
+        ctx.fillStyle = 0;
+        for (i = 0; i<27; i++)
+            {
+                ctx.fillRect(239, i*10, 3, 6);
+            }
+        ctx.font = "30px Roboto Mono";
+        ctx.fillText(pongPlayer2.score,210,30);
+        ctx.fillText(pongPlayer1.score, 252, 30);
+    }
+    
+function ballUpdate()
+    {
+        //document.getElementById("debug").innerHTML = pongBall.y+' '+pongPlayer2.y;
+        if (pongBall.x > 450)
+            if((pongBall.y < pongPlayer2.y - 10)||(pongBall.y > pongPlayer2.y + pongPlayer2.height))
+                 {
+                     //out
+                     return 2;
+                 }
+            else //bounce
+                {
+                    pongBall.x=450;pongBall.dx=-1;
+                    if(pongPlayer2.dy > 0)
+                        {
+                            pongBall.dy = pongBall.dy + 1;
+                            if(pongBall.dy > 4)pongBall.dy = 4;
+                        }
+                    if(pongPlayer2.dy < 0)
+                        {
+                            pongBall.dy = pongBall.dy - 1;
+                            if(pongBall.dy < -4)pongBall.dy = -4;
+                        }
+                    if(pongPlayer2.dy == 0)
+                        {
+                            if(pongBall.dy > 0)
+                                {
+                                    pongBall.dy -= 1;
+                                }
+                            else
+                                {
+                                    pongBall.dy += 1;
+                                }
+                        }
+                }
+    
+    
+        if (pongBall.x < 20)
+            if((pongBall.y < pongPlayer1.y - 10)||(pongBall.y > pongPlayer1.y + pongPlayer1.height))
+                 {
+                     //out
+                     return 1;
+                 }
+            else
+                {
+                    pongBall.x=20;pongBall.dx=1;
+                    if(pongPlayer1.dy > 0)
+                        {
+                            pongBall.dy = pongBall.dy + 1;
+                            if(pongBall.dy > 4)pongBall.dy = 4;
+                        }
+                    if(pongPlayer1.dy < 0)
+                        {
+                            pongBall.dy = pongBall.dy - 1;
+                            if(pongBall.dy < -4)pongBall.dy = -4;
+                        }
+                    if(pongPlayer1.dy == 0)
+                        {
+                            if(pongBall.dy > 0)
+                                {
+                                    pongBall.dy -= 1;
+                                }
+                            else
+                                {
+                                    pongBall.dy += 1;
+                                }
+                        }
+                }
+        return 0;
+    }
+
+function updateGameArea() 
+    {
+        var hitmiss;
+        var playerAutoPosition;
+
+        myGameArea.clear();
+
+        //automatic player1
+        playerAutoPosition = pongPlayer1.y + pongPlayer1.height / 2;
+        if(pongBall.y < playerAutoPosition)
+            pongPlayer1.dy = -0.1-Math.random()/10;
+        else
+            pongPlayer1.dy = 0.1+Math.random()/10;
+        //update players positions
+        pongPlayer1.newPos();
+        pongPlayer2.newPos();
+        pongPlayer1.update();
+        pongPlayer2.update();
+
+        if(game_state == 0)
+            {
+                hitmiss = ballUpdate();
+                if(hitmiss == 2)
+                    {
+                        pongPlayer2.score += 1;
+                        game_state = 1;
+                    }  
+                if(hitmiss == 1)
+                    {
+                        pongPlayer1.score += 1;
+                        game_state = 2;
+                    } 
+                //update ball
+                pongBall.ballPos();
+                pongBall.update();
+            }
+        
+
+        pongScore();
+    
+    }
+
+
+        
+document.addEventListener('keydown', keypress); 
+document.addEventListener('keyup', keyrelease);
+    
+function keypress(event) {
+    var key = event.keyCode;
+    switch(key)
+        {
+            case 81: pongPlayer1.dy = -1; break;
+            case 65: pongPlayer1.dy = 1; break;
+            case 80: pongPlayer2.dy = -1; break;
+            case 76: pongPlayer2.dy = 1; break;
+            case 90: 
+                if(game_state == 1)
+                    {
+                        game_state = 0;
+                pongBall.x = 20;
+                pongBall.y = 20;
+                pongBall.dx = 1;
+                pongBall.dy = Math.random();  
+                    }
+                break;
+            case 188: 
+                if(game_state == 2)
+                    {
+                        game_state = 0;
+                pongBall.x = 440;
+                pongBall.y = 10;
+                pongBall.dx = -1;
+                pongBall.dy = Math.random();  
+                    }
+                break;
+        }
+        
+  document.getElementById("out").innerHTML = "The Unicode KEY code is: " + key;
+}    
+    
+function keyrelease(event) {
+    var key = event.keyCode;
+    switch(key)
+        {
+            case 81: pongPlayer1.dy = 0; break;
+            case 65: pongPlayer1.dy = 0; break;
+            case 80: pongPlayer2.dy = 0; break;
+            case 76: pongPlayer2.dy = 0; break;
+        }
+        
+  document.getElementById("out").innerHTML = "Release: " + key;
+}    
+
+function startPongwithComputer()
+    {
+        
+    }
+    
+function startPongwithOponent()
+    {
+        
+    }
+    
+</script>    
+<br>    
+<h2>Andy's PONG</h2><br>
+<span id=game></span>
+<br>
+<input type=button value="Game with computer" onclick="startPongwithComputer()">
+<input type=button value="Game with oponent" onclick="startPongwithOponent()">
+<br>    
+<span id=out>123</span>
+<input type=button onclick=""><br> 
+<span id=debug></span>
+        
+    
+</html>    
