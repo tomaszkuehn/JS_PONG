@@ -12,7 +12,8 @@ canvas {
 </head>
 <body onload="startPong()">
 <script>
-var game_state = 1;
+var gameState = 1; //0 - game 1 - player1 move 2 - player2 move
+var gameMode  = 0; //0 - no game 1 - automatic 2 - opponent
 
 function startPong() {
     pongBall = new component(10, 10, "black", 30, 30);
@@ -165,18 +166,32 @@ function updateGameArea()
         pongPlayer1.update();
         pongPlayer2.update();
 
-        if(game_state == 0)
+        if(gameState == 0)
             {
                 hitmiss = ballUpdate();
                 if(hitmiss == 2)
                     {
                         pongPlayer2.score += 1;
-                        game_state = 1;
+                        gameState = 1;
+                        if(pongPlayer2.score < 9)
+                            {
+                                setTimeout(servePlayer1,3000);    
+                            }
+                        else
+                            {
+                                //game over
+                                gameMode = 0;
+                            }
                     }  
                 if(hitmiss == 1)
                     {
                         pongPlayer1.score += 1;
-                        game_state = 2;
+                        gameState = 2;
+                        if(pongPlayer1.score == 9)
+                            {
+                                //game over
+                                gameMode = 0;
+                            }
                     } 
                 //update ball
                 pongBall.ballPos();
@@ -195,6 +210,8 @@ document.addEventListener('keyup', keyrelease);
     
 function keypress(event) {
     var key = event.keyCode;
+    if(gameMode == 0)return;
+    
     switch(key)
         {
             case 81: pongPlayer1.dy = -1; break;
@@ -202,9 +219,9 @@ function keypress(event) {
             case 80: pongPlayer2.dy = -1; break;
             case 76: pongPlayer2.dy = 1; break;
             case 90: 
-                if(game_state == 1)
+                if(gameState == 1)
                     {
-                        game_state = 0;
+                        gameState = 0;
                 pongBall.x = 20;
                 pongBall.y = 20;
                 pongBall.dx = 1;
@@ -212,9 +229,9 @@ function keypress(event) {
                     }
                 break;
             case 188: 
-                if(game_state == 2)
+                if(gameState == 2)
                     {
-                        game_state = 0;
+                        gameState = 0;
                 pongBall.x = 440;
                 pongBall.y = 10;
                 pongBall.dx = -1;
@@ -239,12 +256,37 @@ function keyrelease(event) {
   document.getElementById("out").innerHTML = "Release: " + key;
 }    
 
-function startPongwithComputer()
+function triggerKeyboardEvent(el, keyCode)
+{
+    var eventObj = document.createEventObject ?
+        document.createEventObject() : document.createEvent("Events");
+  
+    if(eventObj.initEvent){
+      eventObj.initEvent("keydown", true, true);
+    }
+  
+    eventObj.keyCode = keyCode;
+    eventObj.which = keyCode;
+    
+    el.dispatchEvent ? el.dispatchEvent(eventObj) : el.fireEvent("onkeydown", eventObj); 
+  
+}    
+
+function servePlayer1()
     {
-        
+        triggerKeyboardEvent(document.body, 90);    
     }
     
-function startPongwithOponent()
+function startPongwithComputer()
+    {
+        gameMode = 1;
+        gameState = 1;
+        pongPlayer1.score = 0;
+        pongPlayer2.score = 0;
+        setTimeout(servePlayer1,3000);
+    }
+    
+function startPongwithOpponent()
     {
         
     }
@@ -255,7 +297,7 @@ function startPongwithOponent()
 <span id=game></span>
 <br>
 <input type=button value="Game with computer" onclick="startPongwithComputer()">
-<input type=button value="Game with oponent" onclick="startPongwithOponent()">
+<input type=button value="Game with opponent" onclick="startPongwithOpponent()">
 <br>    
 <span id=out>123</span>
 <input type=button onclick=""><br> 
